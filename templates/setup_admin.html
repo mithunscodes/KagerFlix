@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Setup Admin - KagerFlix{% endblock %}
+
+{% block content %}
+<main style="display: flex; justify-content: center; align-items: center; min-height: calc(100vh - 80px);">
+  <div class="card" style="width: 100%; max-width: 400px; padding: 2.5rem;">
+    <h1 style="font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem;">Setup Admin Account</h1>
+    <p style="color: var(--muted); margin-bottom: 1.5rem;">Create the initial admin account for KagerFlix</p>
+
+    {% if error %}
+      <div style="background: rgba(255,107,107,0.12); border: 1px solid rgba(255,107,107,0.2); padding: 0.9rem; border-radius: 12px; color: var(--accent2); margin-bottom: 1.5rem; font-size: 0.9rem;">
+        {{ error }}
+      </div>
+    {% endif %}
+
+    <form method="POST" style="display: flex; flex-direction: column; gap: 1.2rem;">
+      <div>
+        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">Admin Username</label>
+        <input type="text" name="username" required style="width: 100%; padding: 0.75rem; border-radius: 10px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-family: inherit; font-size: 0.9rem; transition: border-color 0.2s;" placeholder="admin">
+      </div>
+
+      <div>
+        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">Admin Email</label>
+        <input type="email" name="email" required style="width: 100%; padding: 0.75rem; border-radius: 10px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-family: inherit; font-size: 0.9rem; transition: border-color 0.2s;" placeholder="admin@example.com">
+      </div>
+
+      <div>
+        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">Admin Password</label>
+        <input type="password" name="password" required style="width: 100%; padding: 0.75rem; border-radius: 10px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-family: inherit; font-size: 0.9rem; transition: border-color 0.2s;" placeholder="••••••••">
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.8rem; font-size: 1rem; font-weight: 600;">Create Admin Account</button>
+    </form>
+
+    <div style="background: rgba(108,99,255,0.08); border: 1px solid rgba(108,99,255,0.2); padding: 0.9rem; border-radius: 12px; margin-top: 1.5rem; font-size: 0.85rem; color: var(--muted);">
+      <strong style="color: var(--text);">⚠️ Important:</strong> Keep your admin credentials secure. This is the only account that can delete videos.
+    </div>
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — KagerFlix{% endblock %}
+{% block extra_head %}
+<style>
+.page-header {
+  margin-bottom: 2.5rem;
+}
+.page-header h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 2rem; font-weight: 800; margin-bottom: 0.35rem;
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem; margin-bottom: 2.5rem;
+}
+.stat-card {
+  padding: 1.5rem;
+  border-radius: 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+}
+.stat-label { font-size: 0.78rem; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+.stat-value { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; }
+.stat-card:nth-child(1) .stat-value { color: var(--accent); }
+.stat-card:nth-child(2) .stat-value { color: var(--accent3); }
+.stat-card:nth-child(3) .stat-value { color: #ffc850; }
+.stat-card:nth-child(4) .stat-value { color: var(--accent2); }
+.stat-card:nth-child(5) .stat-value { color: #64dfdf; }
+
+/* Table */
+.table-wrap {
+  overflow-x: auto; border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+}
+table { width: 100%; border-collapse: collapse; }
+thead tr { border-bottom: 1px solid var(--border); }
+th {
+  padding: 1rem 1.25rem; text-align: left;
+  font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--muted); font-weight: 600; white-space: nowrap;
+}
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: rgba(255,255,255,0.025); }
+td { padding: 1rem 1.25rem; font-size: 0.9rem; vertical-align: middle; }
+
+/* Responsive table */
+@media (max-width: 768px) {
+  th, td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.8rem;
+  }
+  
+  .thumb-small {
+    width: 60px;
+    height: 34px;
+  }
+  
+  .video-title-text {
+    font-size: 0.85rem;
+    max-width: 150px;
+  }
+}
+.thumb-small {
+  width: 80px; height: 45px; border-radius: 6px;
+  object-fit: cover; background: var(--surface2);
+  flex-shrink: 0;
+}
+.video-title-cell {
+  display: flex; align-items: center; gap: 0.85rem;
+}
+.video-title-text {
+  font-weight: 500; font-size: 0.92rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 220px;
+}
+.actions { display: flex; gap: 0.4rem; }
+.icon-btn {
+  width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+  background: transparent; color: var(--muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; text-decoration: none;
+}
+.icon-btn:hover { background: var(--surface2); color: var(--text); border-color: rgba(255,255,255,0.15); }
+.icon-btn.del:hover { background: rgba(255,107,107,0.15); color: var(--accent2); border-color: rgba(255,107,107,0.2); }
+
+/* Progress bar for processing */
+.progress-bar {
+  height: 3px; border-radius: 2px; background: var(--surface2);
+  overflow: hidden; margin-top: 0.35rem;
+}
+.progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 2px; animation: progressAnim 1.5s ease-in-out infinite;
+  width: 40%;
+}
+@keyframes progressAnim {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+/* Edit modal */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 2rem; width: 100%; max-width: 480px;
+  transform: translateY(20px); transition: transform 0.25s;
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal h3 { font-family: 'Syne', sans-serif; font-size: 1.2rem; margin-bottom: 1.5rem; }
+.form-group { margin-bottom: 1.25rem; }
+label { display: block; font-size: 0.82rem; color: var(--muted); font-weight: 500; margin-bottom: 0.4rem; }
+input[type=text], textarea {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); border-radius: 10px; padding: 0.7rem 1rem;
+  font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+  outline: none; transition: border-color 0.2s; resize: vertical;
+}
+input[type=text]:focus, textarea:focus { border-color: var(--accent); }
+.modal-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; justify-content: flex-end; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main>
+  <div class="page-header">
+    <h1>Dashboard</h1>
+    <p class="text-muted">Manage and monitor your video library</p>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total Videos</div>
+      <div class="stat-value">{{ stats.total }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Ready</div>
+      <div class="stat-value">{{ stats.ready }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Processing</div>
+      <div class="stat-value">{{ stats.processing }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Views</div>
+      <div class="stat-value">{{ stats.total_views }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Storage Used</div>
+      <div class="stat-value" style="font-size:1.4rem;">{{ (stats.total_size / 1048576)|round(0)|int }} MB</div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <h2 class="section-title">Video Library</h2>
+    <a href="/upload" class="btn btn-primary">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Upload New
+    </a>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Video</th>
+          <th>Status</th>
+          <th>Duration</th>
+          <th>Size</th>
+          <th>Resolution</th>
+          <th>Views</th>
+          <th>Uploaded</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="video-tbody">
+        {% for v in videos %}
+        <tr id="row-{{ v.id }}" data-status="{{ v.status }}">
+          <td>
+            <div class="video-title-cell">
+              <img class="thumb-small" src="/thumbnail/{{ v.id }}" alt="">
+              <div>
+                <div class="video-title-text">{{ v.title }}</div>
+                {% if v.hls_path %}<div class="text-muted text-sm">HLS ✓</div>{% endif %}
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="badge badge-{{ v.status }}">{{ v.status }}</span>
+            {% if v.status in ['queued','processing'] %}
+            <div class="progress-bar"><div class="progress-fill"></div></div>
+            {% endif %}
+          </td>
+          <td class="text-muted">{{ '%d:%02d'|format((v.duration//60)|int, (v.duration%60)|int) }}</td>
+          <td class="text-muted">{{ (v.file_size / 1048576)|round(1) }} MB</td>
+          <td class="text-muted">
+            {% if v.width and v.height %}{{ v.width }}×{{ v.height }}{% else %}—{% endif %}
+          </td>
+          <td>{{ v.views }}</td>
+          <td class="text-muted" style="white-space:nowrap;">
+            {{ v.created_at.strftime('%b %d, %Y') if v.created_at else '—' }}
+          </td>
+          <td>
+            <div class="actions">
+              {% if v.status == 'ready' %}
+              <a href="/watch/{{ v.id }}" class="icon-btn" title="Watch">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+              </a>
+              {% endif %}
+              <button class="icon-btn" title="Edit" onclick="openEdit('{{ v.id }}','{{ v.title|replace("'","\\'") }}','{{ v.description|replace("'","\\'")|replace("\n"," ") }}')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              {% if current_user.is_authenticated and current_user.is_admin %}
+              <button class="icon-btn del" title="Delete" onclick="deleteVideo('{{ v.id }}')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+              </button>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align:center;padding:4rem;color:var(--muted);">No videos yet — <a href="/upload" style="color:var(--accent)">upload one</a></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <h3>Edit Video</h3>
+    <input type="hidden" id="edit-id">
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" id="edit-title" placeholder="Video title">
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="edit-desc" rows="4" placeholder="Optional description"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeEdit()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openEdit(id, title, desc) {
+  document.getElementById('edit-id').value = id;
+  document.getElementById('edit-title').value = title;
+  document.getElementById('edit-desc').value = desc;
+  document.getElementById('edit-modal').classList.add('open');
+}
+function closeEdit() {
+  document.getElementById('edit-modal').classList.remove('open');
+}
+async function saveEdit() {
+  const id = document.getElementById('edit-id').value;
+  const title = document.getElementById('edit-title').value.trim();
+  const desc = document.getElementById('edit-desc').value.trim();
+  if (!title) { toast('Title cannot be empty', 'error'); return; }
+  const res = await fetch(`/api/video/${id}`, {
+    method: 'PATCH', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({title, description: desc})
+  });
+  if (res.ok) {
+    toast('Saved!', 'success');
+    closeEdit();
+    setTimeout(() => location.reload(), 500);
+  } else {
+    toast('Failed to save', 'error');
+  }
+}
+async function deleteVideo(id) {
+  if (!confirm('Delete this video? This cannot be undone.')) return;
+  const res = await fetch(`/api/video/${id}`, {method:'DELETE'});
+  if (res.ok) {
+    document.getElementById(`row-${id}`)?.remove();
+    toast('Video deleted', 'success');
+  } else {
+    toast('Failed to delete', 'error');
+  }
+}
+
+// Poll for processing status updates
+function pollProcessing() {
+  const processingRows = document.querySelectorAll('[data-status="queued"],[data-status="processing"]');
+  if (processingRows.length === 0) return;
+  processingRows.forEach(async row => {
+    const id = row.id.replace('row-', '');
+    try {
+      const res = await fetch(`/api/video/${id}`);
+      const data = await res.json();
+      if (data.status !== row.dataset.status) {
+        location.reload();
+      }
+    } catch {}
+  });
+}
+setInterval(pollProcessing, 4000);
+
+// Close modal on overlay click
+document.getElementById('edit-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeEdit();
+});
+</script>
+{% endblock %}

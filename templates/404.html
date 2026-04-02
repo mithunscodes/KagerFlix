@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Page Not Found — KagerFlix{% endblock %}
+
+{% block content %}
+<main style="display: flex; justify-content: center; align-items: center; min-height: calc(100vh - 80px); text-align: center;">
+  <div style="max-width: 500px; padding: 2rem;">
+    <div style="font-size: 6rem; margin-bottom: 1rem; opacity: 0.3;">404</div>
+    <h1 style="font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 700; margin-bottom: 1rem;">Page Not Found</h1>
+    <p style="color: var(--muted); font-size: 1.1rem; margin-bottom: 2rem; line-height: 1.6;">
+      The video you're looking for might have been deleted or the link might be incorrect.
+    </p>
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      <a href="/" class="btn btn-primary" style="font-size: 1rem; padding: 0.75rem 1.5rem;">Go Home</a>
+      <button onclick="history.back()" class="btn btn-ghost" style="font-size: 1rem; padding: 0.75rem 1.5rem;">Go Back</button>
+    </div>
+  </div>
+</main>
+{% endblock %}

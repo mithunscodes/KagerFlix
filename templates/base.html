@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}KagerFlix{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #1a1a25;
+  --surface2: #252535;
+  --border: rgba(255,255,255,0.08);
+  --accent: #dc143c; /* Dark red instead of purple */
+  --accent2: #ff4757; /* Lighter red for hover states */
+  --accent3: #2ed573; /* Keep green for success */
+  --text: #f8f8ff;
+  --muted: #a8a8c0;
+  --card-bg: rgba(26,26,37,0.9);
+  --glow: 0 0 50px rgba(220,20,60,0.2);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  background-image:
+    /* Aurora base layer */
+    radial-gradient(ellipse 100% 40% at 20% 0%, rgba(220,20,60,0.15) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 50% at 80% 20%, rgba(255,71,87,0.12) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 60% at 40% 70%, rgba(46,213,115,0.08) 0%, transparent 50%),
+    /* Subtle animated aurora waves */
+    linear-gradient(45deg, rgba(220,20,60,0.05) 0%, rgba(255,71,87,0.03) 25%, rgba(46,213,115,0.02) 50%, rgba(220,20,60,0.05) 75%, rgba(255,71,87,0.03) 100%);
+  background-size: 400% 400%;
+  animation: auroraShift 20s ease-in-out infinite;
+  overflow-x: hidden;
+}
+
+/* NAV */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; gap: 2rem;
+  padding: 1rem 2.5rem;
+  background: rgba(10,10,15,0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.mobile-menu {
+  display: none;
+}
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800; font-size: 1.3rem;
+  color: var(--text);
+  text-decoration: none;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.logo span { color: var(--accent); }
+nav .nav-links { display: flex; gap: 0.25rem; margin-left: auto; align-items: center; }
+nav a.nav-link {
+  color: var(--muted); text-decoration: none;
+  padding: 0.5rem 1rem; border-radius: 8px;
+  font-size: 0.9rem; font-weight: 500;
+  transition: all 0.2s;
+  cursor: pointer;
+  pointer-events: auto;
+}
+nav a.nav-link:hover,
+nav a.nav-link.active {
+  color: var(--text); background: var(--surface2);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+nav a.nav-link:visited {
+  color: var(--muted);
+}
+
+/* Mobile Navigation */
+@media (max-width: 768px) {
+  nav {
+    padding: 1rem 1.5rem;
+    gap: 1rem;
+  }
+  .logo { font-size: 1.1rem; }
+  nav .nav-links { display: none; } /* Hide desktop nav on mobile */
+  .mobile-nav-toggle {
+    display: block !important;
+    position: absolute;
+    right: 0.8rem;
+    top: 0.8rem;
+    background: rgba(255,255,255,0.14);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    z-index: 1100;
+  }
+  
+  /* Mobile menu overlay */
+  .mobile-menu {
+    display: none;
+    position: fixed;
+    top: 56px;
+    left: 0;
+    right: 0;
+    max-height: calc(100vh - 56px);
+    overflow-y: auto;
+    background: rgba(10,10,15,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    padding: 1rem 0;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: all 0.25s ease;
+    z-index: 999;
+  }
+  .mobile-menu.open {
+    display: block;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .mobile-menu .nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: rgba(30,30,40,0.85);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    margin: 0 0.8rem;
+  }
+  
+  .mobile-menu .nav-link,
+  .mobile-menu .btn {
+    width: 100%;
+    margin: 0;
+    padding: 0.85rem 1rem;
+    border-radius: 10px;
+    text-align: left;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.06);
+    color: var(--text);
+  }
+  .mobile-menu .nav-link:hover,
+  .mobile-menu .btn:hover {
+    background: rgba(255,255,255,0.18);
+  }
+}
+
+
+@media (min-width: 769px) {
+  .mobile-menu,
+  .mobile-nav-toggle {
+    display: none !important;
+  }
+}
+
+.btn {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.65rem 1.4rem; border-radius: 10px;
+  background: linear-gradient(135deg, rgba(220,20,60,0.9), rgba(255,71,87,0.8));
+  color: #fff; border: 1px solid rgba(255,255,255,0.2);
+  box-shadow: 0 10px 20px rgba(220,20,60,0.25);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500;
+  cursor: pointer; border: none; text-decoration: none; transition: all 0.2s;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #ff3959, #d11145);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #ff274f, #bd0f3b);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 28px rgba(220,20,60,0.42);
+}
+.btn-ghost {
+  background: rgba(255,255,255,0.07);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+.btn-ghost:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.45);
+}
+.btn-danger {
+  background: rgba(255,71,87,0.18);
+  color: var(--accent2);
+  border: 1px solid rgba(255,71,87,0.3);
+}
+.btn-danger:hover {
+  background: rgba(255,71,87,0.28);
+}
+
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 0.2rem 0.6rem; border-radius: 20px;
+  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.03em;
+}
+.badge-ready { background: rgba(67,233,123,0.12); color: var(--accent3); }
+.badge-processing { background: rgba(255,200,80,0.12); color: #ffc850; }
+.badge-queued { background: rgba(108,99,255,0.12); color: var(--accent); }
+.badge-error { background: rgba(255,107,107,0.12); color: var(--accent2); }
+
+main { 
+  padding: 2.5rem; 
+  max-width: 1440px; 
+  margin: 0 auto; 
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  main { padding: 2rem 1.5rem; }
+}
+
+@media (max-width: 768px) {
+  main { padding: 1.5rem 1rem; }
+  
+  .section-header {
+    margin-bottom: 1.5rem;
+  }
+  
+  .section-title {
+    font-size: 1.25rem;
+  }
+
+  nav .nav-links {
+    display: none;
+  }
+
+  .mobile-nav-toggle {
+    display: block;
+  }
+
+  .mobile-menu {
+    display: none; /* only shown via .open */
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-nav-toggle,
+  .mobile-menu {
+    display: none !important;
+  }
+}
+
+
+@media (max-width: 480px) {
+  main { padding: 1rem 0.75rem; }
+  
+  .section-title {
+    font-size: 1.1rem;
+  }
+}
+
+/* CARDS */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.card:hover { border-color: rgba(255,255,255,0.12); box-shadow: var(--glow); }
+
+/* SECTION HEADER */
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.5rem; font-weight: 700;
+}
+
+/* TOASTS */
+#toast-container {
+  position: fixed; bottom: 2rem; right: 2rem; z-index: 9999;
+  display: flex; flex-direction: column; gap: 0.75rem;
+}
+.toast {
+  padding: 0.9rem 1.4rem; border-radius: 12px;
+  background: var(--surface2); border: 1px solid var(--border);
+  font-size: 0.9rem; color: var(--text);
+  animation: slideIn 0.3s ease;
+  display: flex; align-items: center; gap: 0.75rem;
+  backdrop-filter: blur(20px); box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.toast.success { border-color: rgba(67,233,123,0.3); }
+.toast.error { border-color: rgba(255,107,107,0.3); }
+@keyframes auroraShift {
+  0%, 100% { background-position: 0% 0%; }
+  25% { background-position: 100% 0%; }
+  50% { background-position: 100% 100%; }
+  75% { background-position: 0% 100%; }
+}
+@keyframes slideIn { from { opacity:0; transform:translateY(1rem); } to { opacity:1; transform:translateY(0); } }
+
+/* UTILS */
+.text-muted { color: var(--muted); }
+.text-sm { font-size: 0.85rem; }
+.flex { display: flex; }
+.items-center { align-items: center; }
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 0.75rem; }
+.gap-4 { gap: 1rem; }
+.mt-1 { margin-top: 0.25rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-4 { margin-top: 1rem; }
+</style>
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+<nav>
+  <a class="logo" href="/"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="10" fill="#dc143c" fill-opacity=".18"/><polygon points="9,7 17,11 9,15" fill="#dc143c"/></svg>Kager<span>Flix</span></a>
+  <div class="nav-links">
+    <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">Discover</a>
+    <a href="/dashboard" class="nav-link {% if '/dashboard' in request.path %}active{% endif %}">Dashboard</a>
+    <a href="/upload" class="nav-link {% if '/upload' in request.path %}active{% endif %}">Upload</a>
+  </div>
+  <div class="nav-links">
+    {% if current_user.is_authenticated %}
+      <a href="/upload" class="btn btn-primary" style="margin-left:1rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Upload
+      </a>
+      <a href="/logout" class="btn btn-ghost" style="margin-left:0.5rem;">Logout</a>
+    {% else %}
+      <a href="/login" class="btn btn-ghost" style="margin-left:1rem;">Login</a>
+      <a href="/signup" class="btn btn-primary" style="margin-left:0.5rem;">Join</a>
+    {% endif %}
+  </div>
+  <button class="mobile-nav-toggle" onclick="toggleMobileMenu()" style="display: none;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"/>
+      <line x1="3" y1="6" x2="21" y2="6"/>
+      <line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+</nav>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobile-menu">
+  <div class="nav-links">
+    <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">Discover</a>
+    <a href="/dashboard" class="nav-link {% if '/dashboard' in request.path %}active{% endif %}">Dashboard</a>
+    {% if current_user.is_authenticated %}
+      <a href="/upload" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Upload
+      </a>
+      <a href="/logout" class="btn btn-ghost">Logout</a>
+    {% else %}
+      <a href="/login" class="btn btn-ghost">Sign In</a>
+      <a href="/signup" class="btn btn-primary">Join</a>
+    {% endif %}
+  </div>
+</div>
+
+{% block content %}{% endblock %}
+
+<div id="toast-container"></div>
+
+<script>
+function toast(msg, type='info') {
+  const icons = { success: '✓', error: '✕', info: 'ℹ' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${icons[type]||'·'}</span><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+function formatDuration(s) {
+  s = Math.floor(s||0);
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  return `${m}:${String(sec).padStart(2,'0')}`;
+}
+function formatSize(b) {
+  if (!b) return '—';
+  if (b > 1e9) return (b/1e9).toFixed(1)+' GB';
+  if (b > 1e6) return (b/1e6).toFixed(1)+' MB';
+  return (b/1e3).toFixed(0)+' KB';
+}
+
+// Mobile menu toggle
+function toggleMobileMenu() {
+  const menu = document.getElementById('mobile-menu');
+  const isOpen = menu.classList.toggle('open');
+
+  if (isOpen) {
+    // Delay adding outside click handler so that our own click does not close immediately
+    setTimeout(() => {
+      document.addEventListener('click', closeMobileMenuOnClickOutside);
+    }, 100);
+  } else {
+    document.removeEventListener('click', closeMobileMenuOnClickOutside);
+  }
+}
+
+function closeMobileMenuOnClickOutside(e) {
+  const menu = document.getElementById('mobile-menu');
+  const toggle = document.querySelector('.mobile-nav-toggle');
+
+  if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+    menu.classList.remove('open');
+    document.removeEventListener('click', closeMobileMenuOnClickOutside);
+  }
+}
+
+// Prevent event propagation on menu container so it doesn't trigger outside click to close
+const mobileMenu = document.getElementById('mobile-menu');
+if (mobileMenu) {
+  mobileMenu.addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
+}
+
+// Close mobile menu when a link is clicked
+document.querySelectorAll('#mobile-menu a').forEach(link => {
+  link.addEventListener('click', () => {
+    const menu = document.getElementById('mobile-menu');
+    menu.classList.remove('open');
+    document.removeEventListener('click', closeMobileMenuOnClickOutside);
+  });
+});
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

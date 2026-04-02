@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+{% block title %}Upload — KagerFlix{% endblock %}
+{% block extra_head %}
+<style>
+.upload-page {
+  max-width: 720px; margin: 0 auto;
+  padding: 3rem 1rem;
+}
+.upload-page h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 2.2rem; font-weight: 800;
+  margin-bottom: 0.4rem;
+}
+
+/* Drop zone */
+.drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: 20px; padding: 4rem 2rem;
+  text-align: center; cursor: pointer;
+  transition: all 0.25s;
+  background: var(--card-bg);
+  position: relative; overflow: hidden;
+  margin-bottom: 2rem;
+}
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: var(--accent);
+  background: rgba(108,99,255,0.05);
+  box-shadow: 0 0 0 4px rgba(108,99,255,0.08);
+}
+.drop-icon {
+  width: 64px; height: 64px; margin: 0 auto 1.25rem;
+  background: rgba(108,99,255,0.12);
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent);
+  transition: transform 0.2s;
+}
+.drop-zone:hover .drop-icon { transform: translateY(-3px); }
+.drop-zone h3 { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+.drop-zone p { color: var(--muted); font-size: 0.9rem; }
+.file-types { margin-top: 1rem; display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; }
+.file-type-tag {
+  padding: 0.25rem 0.6rem; border-radius: 6px;
+  font-size: 0.75rem; font-weight: 600;
+  background: rgba(255,255,255,0.05); color: var(--muted);
+  border: 1px solid var(--border);
+}
+#file-input { display: none; }
+
+/* Selected file preview */
+.file-preview {
+  display: none; margin-bottom: 2rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 14px; border: 1px solid var(--border);
+  background: var(--card-bg);
+  align-items: center; gap: 1rem;
+}
+.file-preview.show { display: flex; }
+.file-preview-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: rgba(108,99,255,0.12);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent); flex-shrink: 0;
+}
+.file-preview-name { font-weight: 500; margin-bottom: 0.2rem; }
+.file-preview-meta { color: var(--muted); font-size: 0.82rem; }
+.file-preview-remove {
+  margin-left: auto; background: none; border: none;
+  color: var(--muted); cursor: pointer; padding: 0.4rem;
+  border-radius: 8px; transition: color 0.15s;
+}
+.file-preview-remove:hover { color: var(--accent2); }
+
+/* Form */
+.form-group { margin-bottom: 1.5rem; }
+label { display: block; font-size: 0.83rem; font-weight: 500; color: var(--muted); margin-bottom: 0.45rem; }
+input[type=text], textarea {
+  width: 100%; background: var(--surface);
+  border: 1px solid var(--border); color: var(--text);
+  border-radius: 12px; padding: 0.85rem 1.1rem;
+  font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+  outline: none; transition: border-color 0.2s; resize: vertical;
+}
+input[type=text]:focus, textarea:focus { border-color: var(--accent); }
+
+/* Upload progress */
+.upload-progress {
+  display: none; margin-top: 1.5rem;
+  padding: 1.5rem; border-radius: 14px;
+  border: 1px solid var(--border); background: var(--card-bg);
+}
+.upload-progress.show { display: block; }
+.progress-label { display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.88rem; }
+.progress-track {
+  height: 6px; border-radius: 3px; background: var(--surface2); overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent), #9b8cff);
+  transition: width 0.3s ease;
+  width: 0%;
+}
+.processing-note {
+  margin-top: 1rem; font-size: 0.83rem; color: var(--muted); text-align: center;
+}
+
+.submit-row { display: flex; gap: 1rem; align-items: center; }
+.submit-row .btn { min-width: 160px; justify-content: center; font-size: 1rem; padding: 0.85rem 2rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main>
+  <div class="upload-page">
+    <h1>Upload Video</h1>
+    <p class="text-muted" style="margin-bottom:2.5rem;">Your video will be automatically transcoded to HLS format for adaptive streaming.</p>
+
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <div class="drop-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <h3>Drop your video here</h3>
+      <p>or click to browse files</p>
+      <div class="file-types">
+        <span class="file-type-tag">MP4</span>
+        <span class="file-type-tag">AVI</span>
+        <span class="file-type-tag">MOV</span>
+        <span class="file-type-tag">MKV</span>
+        <span class="file-type-tag">WebM</span>
+        <span class="file-type-tag">FLV</span>
+        <span class="file-type-tag">WMV</span>
+      </div>
+      <p style="margin-top:0.75rem;font-size:0.8rem;">Max file size: 500 MB</p>
+    </div>
+    <input type="file" id="file-input" accept="video/*" onchange="handleFileSelect(this.files[0])">
+
+    <div class="file-preview" id="file-preview">
+      <div class="file-preview-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+      </div>
+      <div>
+        <div class="file-preview-name" id="preview-name"></div>
+        <div class="file-preview-meta" id="preview-meta"></div>
+      </div>
+      <button class="file-preview-remove" onclick="clearFile()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="form-group">
+      <label for="title">Title <span style="color:var(--accent2)">*</span></label>
+      <input type="text" id="title" placeholder="Give your video a name" required>
+    </div>
+    <div class="form-group">
+      <label for="description">Description</label>
+      <textarea id="description" rows="3" placeholder="Optional description..."></textarea>
+    </div>
+
+    <div class="submit-row">
+      <button class="btn btn-primary" id="upload-btn" onclick="startUpload()" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload Video
+      </button>
+      <span class="text-muted text-sm">Video will be transcoded in the background</span>
+    </div>
+
+    <div class="upload-progress" id="upload-progress">
+      <div class="progress-label">
+        <span id="progress-status">Uploading...</span>
+        <span id="progress-pct">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+      <p class="processing-note" id="processing-note" style="display:none;">
+        ✓ Uploaded! Transcoding to HLS in the background — you can watch the video when it's ready.
+      </p>
+    </div>
+  </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let selectedFile = null;
+
+// Drag & Drop
+const dz = document.getElementById('drop-zone');
+['dragenter','dragover'].forEach(e => dz.addEventListener(e, ev => { ev.preventDefault(); dz.classList.add('drag-over'); }));
+['dragleave','drop'].forEach(e => dz.addEventListener(e, ev => { ev.preventDefault(); dz.classList.remove('drag-over'); }));
+dz.addEventListener('drop', ev => {
+  const f = ev.dataTransfer.files[0];
+  if (f) handleFileSelect(f);
+});
+
+function handleFileSelect(file) {
+  if (!file) return;
+  const allowed = ['video/mp4','video/avi','video/quicktime','video/x-matroska','video/webm','video/x-flv','video/x-ms-wmv'];
+  if (!file.type.startsWith('video/') && !allowed.includes(file.type)) {
+    toast('Please select a video file', 'error'); return;
+  }
+  selectedFile = file;
+  document.getElementById('preview-name').textContent = file.name;
+  document.getElementById('preview-meta').textContent = formatSize(file.size) + ' · ' + file.type;
+  document.getElementById('file-preview').classList.add('show');
+
+  // Auto-fill title if empty
+  const titleInput = document.getElementById('title');
+  if (!titleInput.value) {
+    titleInput.value = file.name.replace(/\.[^.]+$/, '').replace(/[_-]/g, ' ');
+  }
+  document.getElementById('upload-btn').disabled = false;
+}
+
+function clearFile() {
+  selectedFile = null;
+  document.getElementById('file-input').value = '';
+  document.getElementById('file-preview').classList.remove('show');
+  document.getElementById('upload-btn').disabled = true;
+}
+
+async function startUpload() {
+  if (!selectedFile) { toast('Please select a file', 'error'); return; }
+  const title = document.getElementById('title').value.trim();
+  if (!title) { toast('Please enter a title', 'error'); document.getElementById('title').focus(); return; }
+
+  const formData = new FormData();
+  formData.append('video', selectedFile);
+  formData.append('title', title);
+  formData.append('description', document.getElementById('description').value.trim());
+
+  document.getElementById('upload-btn').disabled = true;
+  document.getElementById('upload-progress').classList.add('show');
+
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '/upload');
+
+  xhr.upload.onprogress = (e) => {
+    if (e.lengthComputable) {
+      const pct = Math.round(e.loaded / e.total * 100);
+      document.getElementById('progress-fill').style.width = pct + '%';
+      document.getElementById('progress-pct').textContent = pct + '%';
+    }
+  };
+
+  xhr.onload = () => {
+    try {
+      const data = JSON.parse(xhr.responseText);
+      if (data.success) {
+        document.getElementById('progress-fill').style.width = '100%';
+        document.getElementById('progress-pct').textContent = '100%';
+        document.getElementById('progress-status').textContent = 'Upload complete!';
+        document.getElementById('processing-note').style.display = 'block';
+        toast('Video uploaded! Redirecting...', 'success');
+        setTimeout(() => window.location.href = data.redirect, 1500);
+      } else {
+        toast(data.error || 'Upload failed', 'error');
+        document.getElementById('upload-btn').disabled = false;
+      }
+    } catch {
+      toast('Upload failed', 'error');
+      document.getElementById('upload-btn').disabled = false;
+    }
+  };
+
+  xhr.onerror = () => { toast('Network error', 'error'); document.getElementById('upload-btn').disabled = false; };
+  xhr.send(formData);
+}
+</script>
+{% endblock %}

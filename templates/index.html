@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}Discover — KagerFlix{% endblock %}
+{% block extra_head %}
+<style>
+.hero {
+  text-align: center;
+  padding: 5rem 2rem 3rem;
+  position: relative;
+}
+.hero h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--text) 40%, var(--accent));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1rem;
+}
+.hero p {
+  color: var(--muted); font-size: 1.1rem; max-width: 480px; margin: 0 auto 2rem;
+}
+
+/* Responsive hero */
+@media (max-width: 768px) {
+  .hero {
+    padding: 3rem 1.5rem 2rem;
+  }
+  .hero h1 {
+    font-size: clamp(2rem, 8vw, 3.5rem);
+  }
+  .hero p {
+    font-size: 1rem;
+  }
+}
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Responsive video grid */
+@media (max-width: 768px) {
+  .video-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .video-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+.video-card {
+  cursor: pointer; text-decoration: none; color: inherit;
+  display: block;
+}
+.video-thumb {
+  position: relative; border-radius: 12px; overflow: hidden;
+  aspect-ratio: 16/9; background: var(--surface2);
+}
+.video-thumb img {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform 0.4s ease;
+}
+.video-card:hover .video-thumb img { transform: scale(1.04); }
+.video-thumb .duration-badge {
+  position: absolute; bottom: 0.6rem; right: 0.6rem;
+  background: rgba(0,0,0,0.75); color: white;
+  font-size: 0.78rem; font-weight: 600;
+  padding: 0.2rem 0.55rem; border-radius: 6px;
+  backdrop-filter: blur(4px);
+}
+.play-overlay {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.2s;
+  background: rgba(0,0,0,0.35);
+}
+.video-card:hover .play-overlay { opacity: 1; }
+.play-btn-big {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: rgba(108,99,255,0.9);
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(8px);
+}
+.video-info { padding: 0.85rem 0.2rem 0; }
+.video-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 600; font-size: 0.97rem;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  margin-bottom: 0.35rem; line-height: 1.4;
+}
+.video-meta { color: var(--muted); font-size: 0.8rem; display: flex; gap: 0.75rem; }
+.empty-state {
+  text-align: center; padding: 8rem 2rem;
+}
+.empty-state svg { margin-bottom: 1.5rem; opacity: 0.2; }
+.empty-state h2 { font-family: 'Syne', sans-serif; font-size: 1.5rem; margin-bottom: 0.5rem; }
+.empty-state p { color: var(--muted); margin-bottom: 2rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero">
+  <h1>Welcome to<br>KagerFlix</h1>
+  <p>Upload, transcode, and stream video content with adaptive quality — all in your control.</p>
+  {% if current_user.is_authenticated %}
+  <a href="/upload" class="btn btn-primary" style="font-size:1rem; padding:0.75rem 2rem;">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Upload First Video
+  </a>
+  {% else %}
+  <div style="display: flex; gap: 1rem; justify-content: center; font-size:1rem;">
+    <a href="/login" class="btn btn-ghost" style="padding:0.75rem 2rem;">Sign In</a>
+    <a href="/signup" class="btn btn-primary" style="padding:0.75rem 2rem;">Join Now</a>
+  </div>
+  {% endif %}
+</div>
+
+<main>
+  {% if videos %}
+  <div class="section-header">
+    <h2 class="section-title">All Videos <span class="text-muted" style="font-size:1rem;font-weight:400;">({{ videos|length }})</span></h2>
+  </div>
+  <div class="video-grid">
+    {% for v in videos %}
+    <a href="/watch/{{ v.id }}" class="video-card">
+      <div class="video-thumb">
+        <img src="/thumbnail/{{ v.id }}" alt="{{ v.title }}" loading="lazy">
+        <div class="play-overlay">
+          <div class="play-btn-big">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg>
+          </div>
+        </div>
+        <span class="duration-badge" id="dur-{{ v.id }}">{{ '%d:%02d'|format((v.duration//60)|int, (v.duration%60)|int) }}</span>
+      </div>
+      <div class="video-info">
+        <div class="video-title">{{ v.title }}</div>
+        <div class="video-meta">
+          <span>{{ v.views }} views</span>
+          <span>{{ (v.file_size / 1048576)|round(1) }} MB</span>
+          {% if v.width and v.height %}<span>{{ v.width }}×{{ v.height }}</span>{% endif %}
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    <h2>No videos yet</h2>
+    <p>{% if current_user.is_authenticated %}Upload your first video to get started{% else %}Sign up and upload your first video to get started{% endif %}</p>
+    {% if current_user.is_authenticated %}
+    <a href="/upload" class="btn btn-primary">Upload Video</a>
+    {% else %}
+    <a href="/signup" class="btn btn-primary">Sign Up and Upload</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</main>
+{% endblock %}

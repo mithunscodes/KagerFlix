@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+{% block title %}{{ video.title }} — KagerFlix{% endblock %}
+{% block extra_head %}
+<style>
+.watch-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 2rem;
+  align-items: start;
+}
+@media (max-width: 960px) {
+  .watch-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .watch-layout {
+    gap: 1.5rem;
+  }
+}
+
+/* Player */
+.player-section { }
+.player-wrap {
+  border-radius: 18px; overflow: hidden;
+  background: #000;
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  max-height: 80vh;
+}
+video {
+  width: 100%;
+  height: 100%;
+  max-height: 80vh;
+  display: block;
+  background: #000;
+  object-fit: contain;
+}
+
+/* Processing overlay */
+.processing-overlay {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(5,5,10,0.9);
+  border-radius: 18px;
+}
+.spinner {
+  width: 48px; height: 48px; border-radius: 50%;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  animation: spin 0.9s linear infinite;
+  margin-bottom: 1.25rem;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.processing-overlay h3 { font-family: 'Syne', sans-serif; font-size: 1.1rem; margin-bottom: 0.4rem; }
+.processing-overlay p { color: var(--muted); font-size: 0.88rem; }
+
+/* Video info */
+.video-info-section {
+  padding: 1.5rem 0;
+}
+.video-info-section h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.5rem; font-weight: 700;
+  margin-bottom: 0.75rem; line-height: 1.3;
+}
+.video-meta-row {
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.video-meta-item { color: var(--muted); font-size: 0.85rem; display: flex; align-items: center; gap: 0.35rem; }
+.description-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px; padding: 1.2rem 1.4rem;
+  font-size: 0.9rem; color: var(--muted);
+  line-height: 1.6; margin-top: 1.25rem;
+}
+.description-box strong { color: var(--text); font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.07em; display: block; margin-bottom: 0.5rem; }
+
+/* Tech info */
+.tech-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+.tech-tag {
+  padding: 0.25rem 0.75rem; border-radius: 20px;
+  font-size: 0.78rem; font-weight: 500;
+  background: rgba(255,255,255,0.05); color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+/* Sidebar */
+.sidebar h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem; font-weight: 700;
+  margin-bottom: 1rem; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.related-video {
+  display: flex; gap: 0.85rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  text-decoration: none; color: inherit;
+  transition: background 0.15s;
+  margin-bottom: 0.5rem;
+}
+.related-video:hover { background: var(--surface2); }
+.related-thumb {
+  width: 120px; min-width: 120px; height: 68px;
+  border-radius: 8px; object-fit: cover;
+  background: var(--surface2);
+}
+.related-info { overflow: hidden; }
+.related-title {
+  font-size: 0.87rem; font-weight: 500;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  margin-bottom: 0.3rem; line-height: 1.4;
+}
+.related-meta { color: var(--muted); font-size: 0.78rem; }
+
+/* Quality selector */
+.quality-selector {
+  margin-top: 1rem;
+  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+}
+.quality-label { color: var(--muted); font-size: 0.82rem; margin-right: 0.25rem; }
+.quality-btn {
+  padding: 0.3rem 0.8rem; border-radius: 8px; border: 1px solid var(--border);
+  background: transparent; color: var(--muted); cursor: pointer;
+  font-size: 0.8rem; font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.quality-btn:hover, .quality-btn.active { background: var(--surface2); color: var(--text); border-color: rgba(255,255,255,0.15); }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<main>
+  <div class="watch-layout">
+    <!-- Player column -->
+    <div class="player-section">
+      <div class="player-wrap" id="player-wrap">
+        {% if video.status == 'ready' %}
+        <video id="player" controls playsinline preload="metadata"></video>
+        {% else %}
+        <div class="processing-overlay">
+          <div class="spinner"></div>
+          <h3>{{ 'Transcoding...' if video.status == 'processing' else 'Queued for processing' }}</h3>
+          <p>This page will refresh when ready</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="video-info-section">
+        <h1>{{ video.title }}</h1>
+        <div class="video-meta-row">
+          <span class="badge badge-{{ video.status }}">{{ video.status }}</span>
+          <span class="video-meta-item">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            {{ video.views }} views
+          </span>
+          {% if video.duration %}
+          <span class="video-meta-item">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            {{ '%d:%02d'|format((video.duration//60)|int, (video.duration%60)|int) }}
+          </span>
+          {% endif %}
+          {% if video.created_at %}
+          <span class="video-meta-item">{{ video.created_at.strftime('%B %d, %Y') }}</span>
+          {% endif %}
+        </div>
+
+        {% if video.status == 'ready' %}
+        <div class="quality-selector">
+          <span class="quality-label">Quality:</span>
+          <button class="quality-btn active" onclick="switchQuality('auto')">Auto (HLS)</button>
+          <button class="quality-btn" onclick="switchQuality('direct')">Direct MP4</button>
+        </div>
+        {% endif %}
+
+        <div class="description-box">
+          <strong>About this video</strong>
+          {{ video.description or 'No description provided.' }}
+        </div>
+
+        <div class="tech-tags">
+          {% if video.codec %}<span class="tech-tag">{{ video.codec.upper() }}</span>{% endif %}
+          {% if video.width and video.height %}<span class="tech-tag">{{ video.width }}×{{ video.height }}</span>{% endif %}
+          {% if video.file_size %}<span class="tech-tag">{{ (video.file_size / 1048576)|round(1) }} MB</span>{% endif %}
+          {% if video.hls_path %}<span class="tech-tag">HLS Adaptive</span>{% endif %}
+          {% if video.s3_url %}<span class="tech-tag">S3 Hosted</span>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <h2>Up Next</h2>
+      {% for rv in related %}
+      <a href="/watch/{{ rv.id }}" class="related-video">
+        <img class="related-thumb" src="/thumbnail/{{ rv.id }}" alt="{{ rv.title }}">
+        <div class="related-info">
+          <div class="related-title">{{ rv.title }}</div>
+          <div class="related-meta">
+            {{ rv.views }} views ·
+            {{ '%d:%02d'|format((rv.duration//60)|int, (rv.duration%60)|int) }}
+          </div>
+        </div>
+      </a>
+      {% else %}
+      <p class="text-muted text-sm">No other videos yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const videoId = '{{ video.id }}';
+const videoStatus = '{{ video.status }}';
+const hasHLS = {{ 'true' if video.hls_path else 'false' }};
+
+let hls = null;
+
+function initPlayer(quality = 'auto') {
+  const videoEl = document.getElementById('player');
+  if (!videoEl) return;
+
+  if (hls) { hls.destroy(); hls = null; }
+
+  if (quality === 'auto' && hasHLS) {
+    const src = `/stream/${videoId}/master.m3u8`;
+    if (Hls.isSupported()) {
+      hls = new Hls({ enableWorker: true });
+      hls.loadSource(src);
+      hls.attachMedia(videoEl);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => videoEl.play().catch(() => {}));
+    } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+      videoEl.src = src;
+    }
+  } else {
+    videoEl.src = `/stream/${videoId}/direct`;
+  }
+
+  // Update active quality button
+  document.querySelectorAll('.quality-btn').forEach(b => b.classList.remove('active'));
+  event?.target?.classList.add('active');
+}
+
+function switchQuality(q) {
+  document.querySelectorAll('.quality-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  initPlayer(q);
+}
+
+if (videoStatus === 'ready') {
+  initPlayer('auto');
+} else if (videoStatus === 'queued' || videoStatus === 'processing') {
+  // Poll for completion
+  const poll = setInterval(async () => {
+    try {
+      const res = await fetch(`/api/video/${videoId}`);
+      const data = await res.json();
+      if (data.status === 'ready') {
+        clearInterval(poll);
+        location.reload();
+      }
+    } catch {}
+  }, 5000);
+}
+</script>
+{% endblock %}
