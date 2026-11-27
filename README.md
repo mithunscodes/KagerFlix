@@ -13,7 +13,7 @@ A full-featured video streaming platform built with **Python (Flask)**, **FFmpeg
 - **Thumbnail Generation** — Auto-generated from frame at 2s via FFmpeg
 - **AWS S3 Integration** — Optional cloud storage for HLS playlists
 - **Dashboard** — Table view with status, views, resolution, size; inline edit & delete
-- **Polling** — Watch page auto-refreshes when transcoding completes
+- **Polling** — Watch page auto-refreshes when transcoding complete
 
 ---
 
