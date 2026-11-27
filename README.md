@@ -1,6 +1,6 @@
 # KagerFlix — Video Streaming Platform
 
-A full-featured video streaming platform built with **Python (Flask)**, **FFmpeg**, **AWS S3**, and **SQLite**. Upload, auto-transcode to HLS, and stream video with adaptive bitrate.
+A full-featured video streaming platform built with **Python (Flask)**, **FFmpeg**, **AWS S3**, and **SQLite**. Upload, auto-transcode to HLS, and stream video with adaptive bitrate
 
 ---
 
